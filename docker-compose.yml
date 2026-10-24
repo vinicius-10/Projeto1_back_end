@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    restart: on-failure
+    ports:
+      - "${PORT_SERVER}:${PORT_SERVER}"
+    volumes:
+      - ./app:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
+#    depends_on:
+#       - db
+
+# db:
+#   image: mongo:latest
+#   ports:
+#     - "27017:27017"
+#   volumes:
+#     - mongo_data:/data/db
+#
+#olumes:
+# mongo_data:

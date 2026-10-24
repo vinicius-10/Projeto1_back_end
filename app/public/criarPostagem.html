@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar postagem</title>
+</head>
+<body>
+  <main>
+    <h1>Criar postagem</h1>
+
+    <form id="formPostagem" action="/criarPostagem" method="post">
+      <div>
+        <label for="titulo">Título</label>
+        <input id="titulo" name="titulo" type="text" required>
+      </div>
+
+      <div>
+        <label for="conteudo">Conteúdo</label>
+        <textarea id="conteudo" name="conteudo" required></textarea>
+      </div>
+
+      <div>
+        <label for="email">E-mail do usuário</label>
+        <input id="email" name="email" type="email" required>
+      </div>
+
+      <button type="submit">Publicar</button>
+    </form>
+
+    <p id="mensagem" role="status" aria-live="polite"></p>
+  </main>
+
+  <script>
+    const form = document.getElementById('formPostagem');
+    const mensagem = document.getElementById('mensagem');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      mensagem.textContent = '';
+
+      const titulo = document.getElementById('titulo').value.trim();
+      const conteudo = document.getElementById('conteudo').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!titulo || !conteudo || !email) {
+        mensagem.textContent = 'Preencha título, conteúdo e e-mail do usuário.';
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mensagem.textContent = 'Informe um e-mail válido.';
+        return;
+      }
+
+      try {
+        const resposta = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ titulo, conteudo, email })
+        });
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagem.textContent = resultado.mensagem || 'Não foi possível criar a postagem.';
+          return;
+        }
+
+        mensagem.textContent = 'Postagem criada com sucesso.';
+        form.reset();
+      } catch (erro) {
+        mensagem.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhes da postagem</title>
+</head>
+<body>
+  <main>
+    <p><a href="/visualizarPostagens">Voltar para postagens</a></p>
+    <p id="mensagem" role="status" aria-live="polite">Carregando postagem...</p>
+    <article id="postagem">
+      <div>
+        <input id="tituloPostagem" type="text" disabled>
+      </div>
+      <div>
+        <textarea id="conteudoPostagem" disabled></textarea>
+      </div>
+      <p id="autorPostagem"></p>
+      <button id="editarPostagem" type="button">Editar</button>
+      <button id="excluirPostagem" type="button">Excluir</button>
+      <button id="salvarPostagem" type="button" hidden>Salvar</button>
+      <button id="cancelarEdicaoPostagem" type="button" hidden>Cancelar</button>
+    </article>
+    <section aria-labelledby="tituloComentarios">
+      <h2 id="tituloComentarios">Comentários</h2>
+      <p id="mensagemListaComentarios"></p>
+      <ul id="listaComentarios"></ul>
+    </section>
+    <section aria-labelledby="tituloNovoComentario">
+      <h2 id="tituloNovoComentario">Adicionar comentário</h2>
+      <form id="formComentario">
+        <div>
+          <label for="conteudoComentario">Comentário</label>
+          <textarea id="conteudoComentario" name="conteudo" required></textarea>
+        </div>
+        <div>
+          <label for="emailComentario">E-mail do usuário</label>
+          <input id="emailComentario" name="email" type="email" required>
+        </div>
+        <button type="submit">Enviar comentário</button>
+      </form>
+      <p id="mensagemComentario" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script>
+    const mensagem = document.getElementById('mensagem');
+    const tituloPostagem = document.getElementById('tituloPostagem');
+    const conteudoPostagem = document.getElementById('conteudoPostagem');
+    const autorPostagem = document.getElementById('autorPostagem');
+    const listaComentarios = document.getElementById('listaComentarios');
+    const mensagemListaComentarios = document.getElementById('mensagemListaComentarios');
+    const botaoEditarPostagem = document.getElementById('editarPostagem');
+    const botaoExcluirPostagem = document.getElementById('excluirPostagem');
+    const botaoSalvarPostagem = document.getElementById('salvarPostagem');
+    const botaoCancelarEdicaoPostagem = document.getElementById('cancelarEdicaoPostagem');
+    const formComentario = document.getElementById('formComentario');
+    const mensagemComentario = document.getElementById('mensagemComentario');
+    const postagemId = window.location.pathname.split('/').pop();
+
+    function adicionarTexto(elemento, destino, texto) {
+      const novoElemento = document.createElement(elemento);
+      novoElemento.textContent = texto;
+      destino.append(novoElemento);
+      return novoElemento;
+    }
+
+    function formatarData(data) {
+      return data ? new Date(data).toLocaleString('pt-BR') : '';
+    }
+
+    function renderizarPostagem(postagem) {
+      tituloPostagem.value = postagem.titulo;
+      conteudoPostagem.value = postagem.conteudo;
+      definirModoEdicaoPostagem(false);
+      const autor = postagem.usuario?.nome || 'Usuário desconhecido';
+      autorPostagem.textContent = `Por ${autor} · ${formatarData(postagem.createdAt)}`;
+    }
+
+    function renderizarComentarios(comentarios) {
+      listaComentarios.replaceChildren();
+
+      if (comentarios.length === 0) {
+        mensagemListaComentarios.textContent = 'Ainda não há comentários nesta postagem.';
+        return;
+      }
+
+      mensagemListaComentarios.textContent = '';
+      for (const comentario of comentarios) {
+        const item = document.createElement('li');
+        const autorComentario = comentario.usuario?.nome || 'Usuário desconhecido';
+
+        const campoConteudo = document.createElement('input');
+        campoConteudo.type = 'text';
+        campoConteudo.value = comentario.conteudo;
+        campoConteudo.disabled = true;
+        campoConteudo.setAttribute('aria-label', 'Comentário');
+        item.append(campoConteudo);
+        adicionarTexto(
+          'small',
+          item,
+          `Por ${autorComentario} · ${formatarData(comentario.createdAt)}`
+        );
+
+        const botoes = document.createElement('div');
+        const botaoEditar = document.createElement('button');
+        botaoEditar.type = 'button';
+        botaoEditar.textContent = 'Editar';
+        const botaoExcluir = document.createElement('button');
+        botaoExcluir.type = 'button';
+        botaoExcluir.textContent = 'Excluir';
+        const botaoSalvar = document.createElement('button');
+        botaoSalvar.type = 'button';
+        botaoSalvar.textContent = 'Salvar';
+        botaoSalvar.hidden = true;
+        const botaoCancelar = document.createElement('button');
+        botaoCancelar.type = 'button';
+        botaoCancelar.textContent = 'Cancelar';
+        botaoCancelar.hidden = true;
+
+        botaoEditar.addEventListener('click', () => {
+          campoConteudo.disabled = false;
+          campoConteudo.focus();
+          botaoEditar.hidden = true;
+          botaoExcluir.hidden = true;
+          botaoSalvar.hidden = false;
+          botaoCancelar.hidden = false;
+        });
+
+        botaoCancelar.addEventListener('click', () => {
+          campoConteudo.value = comentario.conteudo;
+          campoConteudo.disabled = true;
+          botaoEditar.hidden = false;
+          botaoExcluir.hidden = false;
+          botaoSalvar.hidden = true;
+          botaoCancelar.hidden = true;
+          mensagemComentario.textContent = '';
+        });
+
+        botaoSalvar.addEventListener('click', () => {
+          editarComentario(comentario.id, campoConteudo.value);
+        });
+
+        botaoExcluir.addEventListener('click', () => excluirComentario(comentario.id));
+
+        botoes.append(botaoEditar, botaoExcluir, botaoSalvar, botaoCancelar);
+        item.append(botoes);
+        listaComentarios.append(item);
+      }
+    }
+
+    function definirModoEdicaoPostagem(editando) {
+      tituloPostagem.disabled = !editando;
+      conteudoPostagem.disabled = !editando;
+      botaoEditarPostagem.hidden = editando;
+      botaoExcluirPostagem.hidden = editando;
+      botaoSalvarPostagem.hidden = !editando;
+      botaoCancelarEdicaoPostagem.hidden = !editando;
+    }
+
+    botaoEditarPostagem.addEventListener('click', () => {
+      definirModoEdicaoPostagem(true);
+      tituloPostagem.focus();
+    });
+
+    botaoCancelarEdicaoPostagem.addEventListener('click', carregarPostagem);
+
+    botaoSalvarPostagem.addEventListener('click', async () => {
+      const titulo = tituloPostagem.value.trim();
+      const conteudo = conteudoPostagem.value.trim();
+
+      if (!titulo || !conteudo) {
+        mensagem.textContent = 'Informe o título e o conteúdo da postagem.';
+        return;
+      }
+
+      try {
+        const resposta = await fetch(`/postagens/${encodeURIComponent(postagemId)}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ titulo, conteudo })
+        });
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagem.textContent = resultado.mensagem || 'Não foi possível editar a postagem.';
+          return;
+        }
+
+        mensagem.textContent = 'Postagem atualizada com sucesso.';
+        await carregarPostagem();
+      } catch (erro) {
+        mensagem.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    });
+
+    botaoExcluirPostagem.addEventListener('click', async () => {
+      if (!window.confirm('Tem certeza que deseja excluir esta postagem e seus comentários?')) {
+        return;
+      }
+
+      try {
+        const resposta = await fetch(`/postagens/${encodeURIComponent(postagemId)}`, {
+          method: 'DELETE'
+        });
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagem.textContent = resultado.mensagem || 'Não foi possível excluir a postagem.';
+          return;
+        }
+
+        window.location.href = '/visualizarPostagens';
+      } catch (erro) {
+        mensagem.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    });
+
+    async function editarComentario(comentarioId, conteudo) {
+      const conteudoNormalizado = conteudo.trim();
+
+      if (!conteudoNormalizado) {
+        mensagemComentario.textContent = 'O comentário não pode ficar vazio.';
+        return;
+      }
+
+      try {
+        const resposta = await fetch(
+          `/postagens/${encodeURIComponent(postagemId)}/comentarios/${encodeURIComponent(comentarioId)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ conteudo: conteudoNormalizado })
+          }
+        );
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagemComentario.textContent = resultado.mensagem || 'Não foi possível editar o comentário.';
+          return;
+        }
+
+        mensagemComentario.textContent = 'Comentário atualizado com sucesso.';
+        await carregarPostagem();
+      } catch (erro) {
+        mensagemComentario.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    }
+
+    async function excluirComentario(comentarioId) {
+      if (!window.confirm('Tem certeza que deseja excluir este comentário?')) {
+        return;
+      }
+
+      try {
+        const resposta = await fetch(
+          `/postagens/${encodeURIComponent(postagemId)}/comentarios/${encodeURIComponent(comentarioId)}`,
+          {
+            method: 'DELETE'
+          }
+        );
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagemComentario.textContent = resultado.mensagem || 'Não foi possível excluir o comentário.';
+          return;
+        }
+
+        mensagemComentario.textContent = resultado.mensagem;
+        await carregarPostagem();
+      } catch (erro) {
+        mensagemComentario.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    }
+
+    formComentario.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      mensagemComentario.textContent = '';
+
+      const conteudo = document.getElementById('conteudoComentario').value.trim();
+      const email = document.getElementById('emailComentario').value.trim();
+
+      if (!conteudo || !email) {
+        mensagemComentario.textContent = 'Preencha o comentário e o e-mail do usuário.';
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mensagemComentario.textContent = 'Informe um e-mail válido.';
+        return;
+      }
+
+      try {
+        const resposta = await fetch(`/postagens/${encodeURIComponent(postagemId)}/comentarios`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ conteudo, email })
+        });
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagemComentario.textContent = resultado.mensagem || 'Não foi possível enviar o comentário.';
+          return;
+        }
+
+        formComentario.reset();
+        mensagemComentario.textContent = 'Comentário enviado com sucesso.';
+        await carregarPostagem();
+      } catch (erro) {
+        mensagemComentario.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    });
+
+    async function carregarPostagem() {
+      try {
+        const respostaPostagem = await fetch(`/postagens/${encodeURIComponent(postagemId)}`);
+        const resultadoPostagem = await respostaPostagem.json();
+
+        if (!respostaPostagem.ok) {
+          throw new Error(resultadoPostagem.mensagem || 'Não foi possível carregar a postagem.');
+        }
+
+        const respostaComentarios = await fetch(
+          `/postagens/${encodeURIComponent(postagemId)}/comentarios`
+        );
+        const resultadoComentarios = await respostaComentarios.json();
+
+        if (!respostaComentarios.ok) {
+          throw new Error(resultadoComentarios.mensagem || 'Não foi possível carregar os comentários.');
+        }
+
+        renderizarPostagem(resultadoPostagem.postagem);
+        renderizarComentarios(resultadoComentarios.comentarios);
+        mensagem.textContent = '';
+      } catch (erro) {
+        mensagem.textContent = erro.message || 'Não foi possível conectar ao servidor.';
+      }
+    }
+
+    carregarPostagem();
+  </script>
+</body>
+</html>

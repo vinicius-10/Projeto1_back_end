@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de usuário</title>
+</head>
+<body>
+  <main>
+    <h1>Cadastro de usuário</h1>
+
+    <form id="formCadastro" action="/cadastroUsuario" method="post">
+      <div>
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" required>
+      </div>
+
+      <div>
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" required>
+      </div>
+
+      <div>
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" minlength="6" required>
+      </div>
+
+      <div>
+        <label for="confirmarSenha">Confirme a senha</label>
+        <input id="confirmarSenha" name="confirmarSenha" type="password" minlength="6" required>
+      </div>
+
+      <button type="submit">Cadastrar</button>
+    </form>
+
+    <p id="mensagem" role="status" aria-live="polite"></p>
+  </main>
+
+  <script>
+    const form = document.getElementById('formCadastro');
+    const mensagem = document.getElementById('mensagem');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      mensagem.textContent = '';
+
+      const nome = document.getElementById('nome').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+      const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+      if (!nome || !email || !senha.trim() || !confirmarSenha.trim()) {
+        mensagem.textContent = 'Preencha nome, e-mail, senha e confirmação da senha.';
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mensagem.textContent = 'Informe um e-mail válido.';
+        return;
+      }
+
+      if (senha.length < 6) {
+        mensagem.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+        return;
+      }
+
+      if (senha !== confirmarSenha) {
+        mensagem.textContent = 'A senha e a confirmação não coincidem.';
+        return;
+      }
+
+      try {
+        const resposta = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nome, email, senha, confirmarSenha })
+        });
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mensagem.textContent = resultado.mensagem || 'Não foi possível cadastrar o usuário.';
+          return;
+        }
+
+        mensagem.textContent = `Usuário ${resultado.usuario.nome} cadastrado com sucesso.`;
+        form.reset();
+      } catch (erro) {
+        mensagem.textContent = 'Não foi possível conectar ao servidor.';
+      }
+    });
+  </script>
+</body>
+</html>
