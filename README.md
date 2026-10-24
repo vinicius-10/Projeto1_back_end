@@ -34,20 +34,22 @@ Os schemas estão em `app/models/`; o acesso ao banco é organizado pelos DAOs e
 
 ## Tecnologias
 
-- Node.js 20 ou superior.
-- npm.
+- Node.js 20.19 ou superior (necessário para as versões instaladas do MongoDB Driver e do Mongoose).
+- npm 9 ou superior (compatível com o lockfile versão 3; versões atuais do Node.js incluem npm).
 - Express.
 - MongoDB Atlas.
 - Mongoose.
-- Docker Desktop com Docker Compose (para execução containerizada).
+- Docker Desktop com Docker Compose v2 (opcional, para execução containerizada).
 
 ## Requisitos para executar
 
 Escolha uma das formas de execução:
 
 - **Com Docker:** Docker Desktop instalado e em execução, com Docker Compose disponível.
-- **Localmente:** Node.js 20 ou superior e npm instalados.
+- **Localmente:** Node.js 20.19 ou superior e npm 9 ou superior instalados.
 - **Banco de dados:** uma instância MongoDB Atlas acessível pela rede. O serviço MongoDB local do `docker-compose.yml` está desativado; o Compose executa a aplicação Node.js e usa o Atlas configurado no `.env`.
+
+Para conferir as versões instaladas localmente, execute `node --version` e `npm --version`. A execução por Docker usa a versão de Node.js definida na imagem do [Dockerfile](./Dockerfile); não é necessário instalar Node.js ou npm na máquina host nesse caso.
 
 ## Configuração do MongoDB Atlas
 
@@ -65,7 +67,7 @@ Escolha uma das formas de execução:
 
 Consulte também o material de configuração MongoDB disponibilizado pela disciplina: [guia no Moodle da UTFPR](https://moodle.utfpr.edu.br/mod/book/view.php?id=2172296).
 
-## Instalação e configuração
+## Instalação e configuração com Docker
 
 Na raiz do repositório, crie o arquivo local `.env` a partir do exemplo:
 
@@ -82,40 +84,18 @@ MONGO_URL_ATLAS=mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/microblog?
 
 O arquivo `.env` contém credenciais e não deve ser enviado ao Git.
 
-### Instalar dependências para execução local
+## Instalar e executar sem Docker
+
+Instale as dependências na pasta `app` usando o lockfile do projeto:
 
 ```bash
 cd app
-npm install
+npm ci
 ```
 
-## Executar o projeto
+Configure as variáveis de ambiente no terminal antes de iniciar. Substitua a URI de exemplo pelas credenciais do seu MongoDB Atlas.
 
-### Com Docker Compose
-
-Com o `.env` configurado e o Docker Desktop em execução, volte à raiz do repositório e execute:
-
-```bash
-docker compose up --build
-```
-
-A aplicação estará disponível em `http://localhost:8080` (ou na porta definida em `PORT_SERVER`). Para encerrar:
-
-```bash
-docker compose down
-```
-
-### Localmente, sem Docker
-
-No terminal, entre na pasta `app`, configure `MONGO_URL_ATLAS` e `PORT_SERVER` no ambiente e inicie a aplicação:
-
-```bash
-cd app
-npm install
-npm start
-```
-
-No Linux ou macOS, as variáveis podem ser definidas antes de iniciar:
+No Linux ou macOS:
 
 ```bash
 export PORT_SERVER=8080
@@ -131,7 +111,21 @@ $env:MONGO_URL_ATLAS = "mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/mi
 npm start
 ```
 
-Como o comando local não carrega o `.env` automaticamente, configure as variáveis no ambiente antes de executar `npm start`.
+O comando `npm start` inicia a aplicação em `http://localhost:8080`. A execução local não carrega o arquivo `.env` automaticamente; configure as variáveis no terminal como mostrado acima.
+
+## Executar com Docker Compose
+
+Com o `.env` configurado e o Docker Desktop em execução, volte à raiz do repositório e execute:
+
+```bash
+docker compose up --build
+```
+
+A aplicação estará disponível em `http://localhost:8080` (ou na porta definida em `PORT_SERVER`). Para encerrar:
+
+```bash
+docker compose down
+```
 
 ## Páginas e endpoints
 
