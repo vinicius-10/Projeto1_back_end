@@ -160,8 +160,9 @@ Como o comando local não carrega o `.env` automaticamente, configure as variáv
 │   ├── config/
 │   ├── controllers/
 │   ├── dao/
-│   ├── log/
-│   │   └── errors.log
+│   ├── logs/
+│   │   ├── errors.log
+│   │   └── validations.log
 │   ├── models/
 │   ├── public/
 │   ├── utils/
@@ -174,4 +175,4 @@ Como o comando local não carrega o `.env` automaticamente, configure as variáv
 └── README.md
 ```
 
-As exceções da aplicação são registradas em `app/log/errors.log`, incluindo data e hora, operação, tipo, mensagem e stack trace quando disponível.
+As exceções da aplicação são registradas em `app/logs/errors.log`, incluindo data e hora, operação, tipo e mensagem. Os resultados das validações de entrada são registrados em `app/logs/validations.log`, indicando se cada validação foi aprovada ou reprovada, a regra validada, a operação e a data e hora.

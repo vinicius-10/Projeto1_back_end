@@ -24,7 +24,11 @@ class ComentarioController {
   async listarPorPostagem(req, res) {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id),
+      'ID da postagem válido',
+      'Consultar comentários da postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um ID de postagem válido.'
       });
@@ -68,18 +72,24 @@ class ComentarioController {
     const { id } = req.params;
     const { conteudo, email } = req.body || {};
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id),
+      'ID da postagem válido',
+      'Criar comentário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um ID de postagem válido.'
       });
     }
 
-    if (
-      typeof conteudo !== 'string' ||
-      !conteudo.trim() ||
-      typeof email !== 'string' ||
-      !email.trim()
-    ) {
+    if (!logger.registrarValidacao(
+      typeof conteudo === 'string' &&
+        Boolean(conteudo.trim()) &&
+        typeof email === 'string' &&
+        Boolean(email.trim()),
+      'Conteúdo e email informados',
+      'Criar comentário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe o comentário e o email do usuário.'
       });
@@ -87,7 +97,11 @@ class ComentarioController {
 
     const emailNormalizado = email.trim().toLowerCase();
 
-    if (!EMAIL_PATTERN.test(emailNormalizado)) {
+    if (!logger.registrarValidacao(
+      EMAIL_PATTERN.test(emailNormalizado),
+      'Formato do email válido',
+      'Criar comentário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um email válido.'
       });
@@ -129,6 +143,11 @@ class ComentarioController {
       logger.registrarErro(err, 'Criar comentário');
 
       if (err.name === 'ValidationError' || err.name === 'CastError') {
+        logger.registrarValidacao(
+          false,
+          'Validação dos dados do comentário pelo Mongoose',
+          'Criar comentário'
+        );
         return res.status(400).json({
           mensagem: 'Os dados do comentário são inválidos.'
         });
@@ -144,13 +163,21 @@ class ComentarioController {
     const { id, comentarioId } = req.params;
     const { conteudo } = req.body || {};
 
-    if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(comentarioId)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id) && mongoose.isValidObjectId(comentarioId),
+      'IDs da postagem e do comentário válidos',
+      'Editar comentário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe IDs válidos para a postagem e o comentário.'
       });
     }
 
-    if (typeof conteudo !== 'string' || !conteudo.trim()) {
+    if (!logger.registrarValidacao(
+      typeof conteudo === 'string' && Boolean(conteudo.trim()),
+      'Conteúdo do comentário informado',
+      'Editar comentário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe o comentário atualizado.'
       });
@@ -180,6 +207,11 @@ class ComentarioController {
       logger.registrarErro(err, 'Editar comentário');
 
       if (err.name === 'ValidationError' || err.name === 'CastError') {
+        logger.registrarValidacao(
+          false,
+          'Validação dos dados do comentário pelo Mongoose',
+          'Editar comentário'
+        );
         return res.status(400).json({
           mensagem: 'Os dados do comentário são inválidos.'
         });
@@ -194,7 +226,11 @@ class ComentarioController {
   async excluir(req, res) {
     const { id, comentarioId } = req.params;
 
-    if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(comentarioId)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id) && mongoose.isValidObjectId(comentarioId),
+      'IDs da postagem e do comentário válidos',
+      'Excluir comentário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe IDs válidos para a postagem e o comentário.'
       });

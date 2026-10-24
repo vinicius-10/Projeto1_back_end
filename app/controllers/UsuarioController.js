@@ -12,34 +12,48 @@ class UsuarioController {
   async cadastrar(req, res) {
     const { nome, email, senha, confirmarSenha } = req.body || {};
 
-    if (
-      typeof nome !== 'string' ||
-      !nome.trim() ||
-      typeof email !== 'string' ||
-      !email.trim() ||
-      typeof senha !== 'string' ||
-      !senha.trim() ||
-      typeof confirmarSenha !== 'string' ||
-      !confirmarSenha.trim()
-    ) {
+    if (!logger.registrarValidacao(
+      typeof nome === 'string' &&
+        Boolean(nome.trim()) &&
+        typeof email === 'string' &&
+        Boolean(email.trim()) &&
+        typeof senha === 'string' &&
+        Boolean(senha.trim()) &&
+        typeof confirmarSenha === 'string' &&
+        Boolean(confirmarSenha.trim()),
+      'Nome, email, senha e confirmação informados',
+      'Cadastrar usuário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe nome, email, senha e confirmação da senha.'
       });
     }
 
-    if (!EMAIL_PATTERN.test(email.trim())) {
+    if (!logger.registrarValidacao(
+      EMAIL_PATTERN.test(email.trim()),
+      'Formato do email válido',
+      'Cadastrar usuário'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um email válido.'
       });
     }
 
-    if (senha.length < 6) {
+    if (!logger.registrarValidacao(
+      senha.length >= 6,
+      'Senha com pelo menos 6 caracteres',
+      'Cadastrar usuário'
+    )) {
       return res.status(400).json({
         mensagem: 'A senha deve ter pelo menos 6 caracteres.'
       });
     }
 
-    if (senha !== confirmarSenha) {
+    if (!logger.registrarValidacao(
+      senha === confirmarSenha,
+      'Senha e confirmação coincidem',
+      'Cadastrar usuário'
+    )) {
       return res.status(400).json({
         mensagem: 'A senha e a confirmação não coincidem.'
       });
@@ -66,6 +80,11 @@ class UsuarioController {
       }
 
       if (err.name === 'ValidationError') {
+        logger.registrarValidacao(
+          false,
+          'Validação dos dados do usuário pelo Mongoose',
+          'Cadastrar usuário'
+        );
         return res.status(400).json({
           mensagem: 'Os dados do usuário são inválidos.'
         });

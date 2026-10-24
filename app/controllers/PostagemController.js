@@ -27,7 +27,11 @@ class PostagemController {
   }
 
   async listar(req, res) {
-    if (req.query.q !== undefined && typeof req.query.q !== 'string') {
+    if (!logger.registrarValidacao(
+      req.query.q === undefined || typeof req.query.q === 'string',
+      'Termo de busca como texto',
+      'Consultar postagens'
+    )) {
       return res.status(400).json({
         mensagem: 'O termo de busca deve ser um texto.'
       });
@@ -71,7 +75,11 @@ class PostagemController {
   async detalhar(req, res) {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id),
+      'ID da postagem válido',
+      'Consultar postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um ID de postagem válido.'
       });
@@ -112,18 +120,24 @@ class PostagemController {
     const { id } = req.params;
     const { titulo, conteudo } = req.body || {};
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id),
+      'ID da postagem válido',
+      'Editar postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um ID de postagem válido.'
       });
     }
 
-    if (
-      typeof titulo !== 'string' ||
-      !titulo.trim() ||
-      typeof conteudo !== 'string' ||
-      !conteudo.trim()
-    ) {
+    if (!logger.registrarValidacao(
+      typeof titulo === 'string' &&
+        Boolean(titulo.trim()) &&
+        typeof conteudo === 'string' &&
+        Boolean(conteudo.trim()),
+      'Título e conteúdo da postagem informados',
+      'Editar postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe o título e o conteúdo da postagem.'
       });
@@ -153,6 +167,11 @@ class PostagemController {
       logger.registrarErro(err, 'Editar postagem');
 
       if (err.name === 'ValidationError' || err.name === 'CastError') {
+        logger.registrarValidacao(
+          false,
+          'Validação dos dados da postagem pelo Mongoose',
+          'Editar postagem'
+        );
         return res.status(400).json({
           mensagem: 'Os dados da postagem são inválidos.'
         });
@@ -167,7 +186,11 @@ class PostagemController {
   async excluir(req, res) {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!logger.registrarValidacao(
+      mongoose.isValidObjectId(id),
+      'ID da postagem válido',
+      'Excluir postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um ID de postagem válido.'
       });
@@ -198,14 +221,16 @@ class PostagemController {
   async criar(req, res) {
     const { titulo, conteudo, email } = req.body || {};
 
-    if (
-      typeof titulo !== 'string' ||
-      !titulo.trim() ||
-      typeof conteudo !== 'string' ||
-      !conteudo.trim() ||
-      typeof email !== 'string' ||
-      !email.trim()
-    ) {
+    if (!logger.registrarValidacao(
+      typeof titulo === 'string' &&
+        Boolean(titulo.trim()) &&
+        typeof conteudo === 'string' &&
+        Boolean(conteudo.trim()) &&
+        typeof email === 'string' &&
+        Boolean(email.trim()),
+      'Título, conteúdo e email informados',
+      'Criar postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe título, conteúdo e o email do usuário.'
       });
@@ -213,7 +238,11 @@ class PostagemController {
 
     const emailNormalizado = email.trim().toLowerCase();
 
-    if (!EMAIL_PATTERN.test(emailNormalizado)) {
+    if (!logger.registrarValidacao(
+      EMAIL_PATTERN.test(emailNormalizado),
+      'Formato do email válido',
+      'Criar postagem'
+    )) {
       return res.status(400).json({
         mensagem: 'Informe um email válido.'
       });
@@ -245,6 +274,11 @@ class PostagemController {
       });
     } catch (err) {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
+        logger.registrarValidacao(
+          false,
+          'Validação dos dados da postagem pelo Mongoose',
+          'Criar postagem'
+        );
         return res.status(400).json({
           mensagem: 'Os dados da postagem são inválidos.'
         });

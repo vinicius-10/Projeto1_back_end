@@ -3,8 +3,14 @@ const path = require('node:path');
 
 const logDirectory = path.join(__dirname, '../logs');
 
-if (!fs.existsSync(logDirectory)) {
-  fs.mkdirSync(logDirectory);
+function garantirArquivoLog(nomeArquivo) {
+  fs.mkdirSync(logDirectory, { recursive: true });
+
+  const caminhoArquivo = path.join(logDirectory, nomeArquivo);
+  const descritor = fs.openSync(caminhoArquivo, 'a');
+  fs.closeSync(descritor);
+
+  return caminhoArquivo;
 }
 
 function registrarErro(erro, operacao) {
@@ -13,7 +19,24 @@ function registrarErro(erro, operacao) {
   const data = new Date().toISOString();
 
   const log = data + ' - ' + tipo + ' - ' + mensagem + ' - Operação: ' + operacao + '\n';
-  fs.appendFileSync(path.join(logDirectory, 'errors.log'), log);
+  fs.appendFileSync(garantirArquivoLog('errors.log'), log);
 }
 
-module.exports = { registrarErro };
+function registrarValidacao(passou, validacao, operacao) {
+  const resultado = passou ? 'APROVADA' : 'REPROVADA';
+  const data = new Date().toISOString();
+  const log =
+    data +
+    ' - Validação ' +
+    resultado +
+    ' - ' +
+    validacao +
+    ' - Operação: ' +
+    operacao +
+    '\n';
+
+  fs.appendFileSync(garantirArquivoLog('validations.log'), log);
+  return passou;
+}
+
+module.exports = { registrarErro, registrarValidacao };
